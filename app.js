@@ -10,7 +10,7 @@ var path = require('path');
 var mongodb = require("mongodb");
 var MongoClient = mongodb.MongoClient;
 var mongoServer = new mongodb.Server('localhost', 27017);
-var db = new mongodb.Db('statserver', mongoServer, {
+var db = new mongodb.Db('ldrly', mongoServer, {
 	safe : true
 });
 

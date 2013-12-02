@@ -12,8 +12,8 @@ $npm install -g express
 $cd /path/to/statserverJs
 $npm install
 - insert the data into MongoDb
-$mongo localhost:27017/statserver /path/to/statserverJs/mongodb/createUsers.js
-$mongo localhost:27017/statserver /path/to/statserverJs/mongodb/createStats.js
+$mongo localhost:27017/ldrly /path/to/statserverJs/mongodb/createUsers.js
+$mongo localhost:27017/ldrly /path/to/statserverJs/mongodb/createStats.js
 - run the Node server: 
 $node app.js
 - test the server with curl or a browser plugin such as Chrome's 'Advanced REST Client'

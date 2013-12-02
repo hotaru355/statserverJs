@@ -1,171 +1,52 @@
-
+var userDto = require('../dto/userDto.js');
+var statsDto = require('../dto/statsDto.js');
 
 exports.getStats = function(db) {
 	return function(req, res) {
 		var userName = req.param('userName');
 		if (!userName) {
-			throw new Error("query param required");
+			throw new Error("'userName' query param required");
 		}
-		db.collection('users', {
-			strict : true
-		}, function(err, users) {
-			if (err) {
-				throw new Error(err);
-			}
 
-			users.findOne({
-				userName : userName
-			}, {
-				fields : {
-					_id : 1
-				}
-			}, function(err, userFound) {
-				if (!userFound) {
-					throw new Error("no user found");
-				}
-				db.collection('statistics', {
-					strict : true
-				}, function(err, stats) {
-					if (err) {
-						throw new Error(err);
-					}
-					stats.find({
-						userId : userFound._id
-					}, {
-						fields : {
-							userId : 0
-						}
-					}).toArray(function(err, statsFound) {
-						if (!statsFound) {
-							throw new Error("no stats found");
-						}
-						res.json({
-							userName : userName,
-							stats : statsFound
-						});
-					});
-				});
-			});
-
-		});
-
+		userDto.open(db,
+				userDto.findByUserName(db, userName, 
+						statsDto.open(db,
+								statsDto.findByUserId(db, 
+										statsDto.writeToRes(res, userName)))))();
 	};
 };
 
 exports.saveStats = function(db) {
 	return function(req, res) {
 		var userName = req.param('userName');
-		var statJson = req.body;
-
+		var statsJson = req.body;
 		if (!userName) {
-			throw new Error("query param required");
+			throw new Error("'userName' query param required");
 		}
-		db.collection('users', {
-			strict : true
-		}, function(err, users) {
-			if (err) {
-				throw new Error(err);
-			}
 
-			users.findOne({
-				userName : userName
-			}, {
-				fields : {
-					_id : 1
-				}
-			}, function(err, userFound) {
-				if (!userFound) {
-					throw new Error("no user found");
-				}
-				db.collection('statistics', {
-					strict : true
-				}, function(err, stats) {
-					if (err) {
-						throw new Error(err);
-					}
-
-					statJson['userId'] = userFound._id;
-					stats.insert(statJson, function(err, statInserted) {
-						if (err) {
-							throw new Error("couldnt write");
-						} else {
-							res.json(statInserted);
-						}
-					});
-				});
-			});
-		});
+		userDto.open(db,
+				userDto.findByUserName(db, userName,
+						statsDto.open(db,
+								statsDto.persist(res, statsJson))))();
 	};
 };
 
 exports.getLeaderboard = function(db) {
 	return function(req, res) {
 		var statName = req.param('statName');
-		var userNameById = [];
-		var records = [];
+		var userNamesById = [];
 
 		if (!statName) {
-			throw new Error("query param required");
+			throw new Error("'statName' query param required");
 		}
-
-		db.collection('statistics', {
-			strict : true
-		}, function(err, stats) {
-			if (err) {
-				throw new Error(err);
-			}
-
-			db.collection('users', {
-				strict : true
-			}, function(err, users) {
-				if (err) {
-					throw new Error(err);
-				}
-
-				users.find({}, {
-					fields : {
-						_id : 1,
-						userName : 1
-					}
-				}).toArray(function(err, usersFound) {
-					if (!usersFound) {
-						throw new Error("no user found");
-					}
-					for (var i = 0; i < usersFound.length; i++) {
-						userNameById[usersFound[i]._id] = usersFound[i].userName;
-					}
-					stats.aggregate([ {
-						$match : {
-							statName : statName
-						}
-					}, {
-						$group : {
-							_id : "$userId",
-							total : {
-								$sum : "$value"
-							}
-						}
-					}, {
-						$sort : {
-							total : -1
-						}
-					} ], function(err, statsGrouped) {
-						if (err) {
-							throw new Error(err);
-						}
-						for (var i = 0; i < statsGrouped.length; i++) {
-							records.push({
-								userName : userNameById[statsGrouped[i]._id],
-								value : statsGrouped[i].total,
-							});
-						}
-						res.json({
-							statName : statName,
-							leaders : records
-						});
-					});
-				});
-			});
-		});
+		
+		userDto.open(db,
+				userDto.mapIdsToUserNames(userNamesById,
+						statsDto.open(db,
+								statsDto.groupOnUserId(statName,
+										statsDto.writeLeaderboardToRes(res, userNamesById, statName)))))();
 	};
 };
+
+
+
