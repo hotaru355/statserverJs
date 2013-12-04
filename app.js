@@ -6,6 +6,7 @@ var express = require('express');
 var routes = require('./routes');
 var http = require('http');
 var path = require('path');
+require('express-namespace');
 
 var mongodb = require("mongodb");
 var MongoClient = mongodb.MongoClient;
@@ -13,7 +14,6 @@ var mongoServer = new mongodb.Server('localhost', 27017);
 var db = new mongodb.Db('ldrly', mongoServer, {
 	safe : true
 });
-
 
 var app = express();
 
@@ -38,12 +38,19 @@ db.open(function(err, db) {
 	if (err) {
 		throw new Error(err);
 	}
-	app.get('/stats', routes.getStats(db));
-	app.post('/stats', routes.saveStats(db));
-	app.get('/leaderboard', routes.getLeaderboard(db));
-});
 
-var httpServer = http.createServer(app);
-httpServer.listen(app.get('port'), function(c) {
-	console.log('Express server listening on port ' + app.get('port'));
+	app.namespace('/statserver', function() {
+
+		app.namespace('/stats', function() {
+			app.get('/', routes.getStats(db));
+			app.post('/', routes.saveStats(db));
+			app.get('/leaderboard', routes.getLeaderboard(db));
+		});
+
+	});
+
+	var httpServer = http.createServer(app);
+	httpServer.listen(app.get('port'), function(c) {
+		console.log('Express server listening on port ' + app.get('port'));
+	});
 });

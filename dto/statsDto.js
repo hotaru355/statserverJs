@@ -41,6 +41,7 @@ module.exports = {
 
 	persist : function(res, statsJson) {
 		return function(stats, userFound) {
+			var isArray = statsJson instanceof Array;
 			if (userFound) {
 				statsJson['userId'] = userFound._id;
 			}
@@ -48,7 +49,11 @@ module.exports = {
 				if (err) {
 					throw new Error("couldnt write");
 				} else {
-					res.json(statInserted);
+					if (isArray) {
+						res.json(statInserted);
+					} else {
+						res.json(statInserted[0]);
+					}
 				}
 			});
 		};
@@ -82,16 +87,17 @@ module.exports = {
 
 	writeLeaderboardToRes : function(res, userNamesById, statName) {
 		return function(statsGrouped) {
-			var records = [];
+			var leaders = [];
 			for (var i = 0; i < statsGrouped.length; i++) {
-				records.push({
+				leaders.push({
+					rank : i+1,
 					userName : userNamesById[statsGrouped[i]._id],
 					value : statsGrouped[i].total,
 				});
 			}
 			res.json({
 				statName : statName,
-				leaders : records
+				leaders : leaders
 			});
 		};
 	},
