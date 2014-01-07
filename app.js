@@ -42,6 +42,7 @@ db.open(function(err, db) {
 	app.namespace('/statserver', function() {
 
 		app.namespace('/stats', function() {
+			// get stats
 			app.get('/', routes.getStats(db));
 			app.post('/', routes.saveStats(db));
 			app.get('/leaderboard', routes.getLeaderboard(db));
